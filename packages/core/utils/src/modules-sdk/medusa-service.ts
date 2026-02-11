@@ -162,8 +162,15 @@ export function MedusaService<
       klassPrototype[methodName] = descriptorMockRef.value
     }
 
-    let methodImplementation: any = function () {
-      void 0
+    methodImplementation = async function <T extends object>(
+      this: AbstractModuleService_,
+      data = [],
+      sharedContext: Context = {}
+    ): Promise<T | T[]> {
+      const service = this.__container__[serviceRegistrationName]
+      return await this.baseRepository_.serialize<T | T[]>(
+        await service.update(data, sharedContext)
+      )
     }
 
     switch (method) {
