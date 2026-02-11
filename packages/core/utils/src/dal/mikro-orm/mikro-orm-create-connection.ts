@@ -5,6 +5,10 @@ import { isString, retryExecution, stringifyCircular } from "../../common"
 import { normalizeMigrationSQL } from "../utils"
 import { CustomDBMigrator } from "./custom-db-migrator"
 
+const ON_TABLE_RE = /ON "(.+?)"/
+
+const IDX_UNIQUE_RE = /"IDX_(.+?)_unique"/
+
 type FilterDef = Parameters<typeof MikroORMFilter>[0]
 
 const expectedMigrationsImportStatement =
@@ -17,13 +21,13 @@ export class CustomTsMigrationGenerator extends TSMigrationGenerator {
     sql: string
   ) {
     // DML unique index
-    const uniqueIndexName = sql.match(/"IDX_(.+?)_unique"/)?.[1]
+    const uniqueIndexName = sql.match(IDX_UNIQUE_RE)?.[1]
     if (!uniqueIndexName) {
       return
     }
 
     // Add drop unique constraint if it exists, using the same name as index without IDX_ prefix
-    const tableName = sql.match(/ON "(.+?)"/)?.[1]
+    const tableName = sql.match(ON_TABLE_RE)?.[1]
     if (tableName) {
       sqlPatches.push(
         `alter table if exists "${tableName}" drop constraint if exists "${uniqueIndexName}_unique";`
